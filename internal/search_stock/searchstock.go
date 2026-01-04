@@ -1,0 +1,3 @@
+package searchstock
+
+func searchstock()
