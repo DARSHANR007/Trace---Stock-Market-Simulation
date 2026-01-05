@@ -5,6 +5,9 @@ import (
 	"net/url"
 )
 
+// first it calls login handler to redirect user to upstox login page
+// then an exchange code is received in callback handler to get access token
+// access token is stored in a package level variable for later use
 func LoginHandler(clientID, redirectURI string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		baseURL := "https://api.upstox.com/v2/login/authorization/dialog"

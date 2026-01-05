@@ -2,10 +2,9 @@ package market
 
 import (
 	"net/http"
+	"stockbroker/internal/auth"
 	searchstock "stockbroker/internal/search_stock"
 )
-
-var accessToken string
 
 func MarketHandler(w http.ResponseWriter, r *http.Request) {
 	symbol := r.URL.Query().Get("symbol")
@@ -16,7 +15,7 @@ func MarketHandler(w http.ResponseWriter, r *http.Request) {
 
 	instrumentKey := "NSE_EQ|" + symbol
 
-	data, err := searchstock.GetStockPrice(accessToken, instrumentKey)
+	data, err := searchstock.GetStockPrice(auth.StoredAccessToken, instrumentKey)
 	if err != nil {
 		http.Error(w, "Error fetching stock data", http.StatusInternalServerError)
 		return
