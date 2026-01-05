@@ -1,3 +1,6 @@
+
+<h1>TRACE - Simulate Stocks</h1>
+
 This project is built to understand how stock markets and trading platforms work using real market data. It fetches live prices from Upstox and displays them on a web interface, with the backend written in Go
 
 The idea is to learn how market data flows, how prices change over time, and how trading systems handle real-time information. The project will use live updates and WebSockets to show how real-time market data moves through a system.
