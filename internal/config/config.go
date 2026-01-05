@@ -11,6 +11,7 @@ type Config struct {
 	ClientID     string
 	ClientSecret string
 	RedirectURI  string
+	DevToken     string
 }
 
 func Load() *Config {

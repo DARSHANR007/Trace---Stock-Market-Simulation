@@ -7,6 +7,7 @@ import (
 )
 
 func GetStockPrice(accessToken string, instrumentKey string) ([]byte, error) {
+
 	url := fmt.Sprintf(
 		"https://api.upstox.com/v2/market-quote/quotes?instrument_key=%s",
 		instrumentKey,
@@ -19,6 +20,7 @@ func GetStockPrice(accessToken string, instrumentKey string) ([]byte, error) {
 
 	req.Header.Set("Authorization", "Bearer "+accessToken)
 	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -26,9 +28,11 @@ func GetStockPrice(accessToken string, instrumentKey string) ([]byte, error) {
 	}
 	defer resp.Body.Close()
 
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("non-OK HTTP status: %d", resp.StatusCode)
-	}
+	body, _ := io.ReadAll(resp.Body)
 
-	return io.ReadAll(resp.Body)
+	//  TEMP DEBUG
+	fmt.Println("UPSTOX STATUS:", resp.StatusCode)
+	fmt.Println("UPSTOX BODY:", string(body))
+
+	return body, nil
 }

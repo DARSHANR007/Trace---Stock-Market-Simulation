@@ -6,6 +6,7 @@ import (
 
 	"stockbroker/internal/auth"
 	"stockbroker/internal/config"
+	"stockbroker/internal/market"
 )
 
 func main() {
@@ -25,8 +26,8 @@ func main() {
 	//  Register routes
 	mux.HandleFunc("/login", auth.LoginHandler(cfg.ClientID, cfg.RedirectURI))
 	mux.HandleFunc("/callback", auth.CallbackHandler(oauth))
+	mux.HandleFunc("/getprice", market.MarketHandler)
 
-	// (Optional sanity route)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Server running"))
 	})
