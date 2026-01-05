@@ -26,6 +26,8 @@ func CallbackHandler(oauth *UpstoxOAuth) http.HandlerFunc {
 
 		fmt.Println("ACCESS TOKEN:", token.Value)
 
+		http.Redirect(w, r, "/seeprice", http.StatusFound)
+
 		w.Write([]byte("Login successful. You can close this page."))
 	}
 }

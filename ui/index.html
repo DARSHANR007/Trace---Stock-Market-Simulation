@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>Stock Price Viewer</title>
+	<style>
+		body {
+			font-family: Arial, sans-serif;
+			padding: 40px;
+		}
+		input {
+			padding: 8px;
+			font-size: 16px;
+		}
+		button {
+			padding: 8px 14px;
+			font-size: 16px;
+			margin-left: 6px;
+		}
+		pre {
+			margin-top: 20px;
+			background: #f5f5f5;
+			padding: 15px;
+		}
+	</style>
+</head>
+<body>
+
+	<h2>Stock Price</h2>
+
+	<input id="symbol" placeholder="ZOMATO / RELIANCE / TCS" />
+	<button onclick="getPrice()">Get Price</button>
+
+	<pre id="result"></pre>
+
+	<script>
+		function getPrice() {
+			const symbol = document.getElementById("symbol").value.trim();
+			if (!symbol) {
+				alert("Enter a stock symbol");
+				return;
+			}
+
+			fetch(`/getprice?symbol=${symbol}`)
+				.then(res => res.text())
+				.then(data => {
+					document.getElementById("result").textContent = data;
+				})
+				.catch(() => {
+					document.getElementById("result").textContent = "Error fetching data";
+				});
+		}
+	</script>
+
+</body>
+</html>
