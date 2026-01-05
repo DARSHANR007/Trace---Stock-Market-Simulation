@@ -9,20 +9,20 @@ import (
 )
 
 func main() {
-	// 1️⃣ Load env config
+	// Load env config
 	cfg := config.Load()
 
-	// 2️⃣ Create OAuth client (VERY IMPORTANT)
+	// Create OAuth client (VERY IMPORTANT)
 	oauth := &auth.UpstoxOAuth{
 		ClientID:     cfg.ClientID,
 		ClientSecret: cfg.ClientSecret,
 		RedirectURI:  cfg.RedirectURI,
 	}
 
-	// 3️⃣ Create mux
+	//  Create mux
 	mux := http.NewServeMux()
 
-	// 4️⃣ Register routes
+	//  Register routes
 	mux.HandleFunc("/login", auth.LoginHandler(cfg.ClientID, cfg.RedirectURI))
 	mux.HandleFunc("/callback", auth.CallbackHandler(oauth))
 
@@ -31,7 +31,7 @@ func main() {
 		w.Write([]byte("Server running"))
 	})
 
-	// 5️⃣ Start server
-	fmt.Println("Server running at http://localhost:8000")
+	//  Start server
+	fmt.Println("Server running at http://localhost:8000/login")
 	http.ListenAndServe(":8000", mux)
 }
