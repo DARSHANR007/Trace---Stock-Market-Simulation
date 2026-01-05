@@ -14,6 +14,7 @@ func main() {
 
 	mux := http.NewServeMux()
 	mux.HandleFunc("/login", auth.LoginHandler(cfg.ClientID, cfg.RedirectURI))
+	mux.HandleFunc("/oauth/callback", auth.ExchangeToken(cfg.ClientID, cfg.ClientSecret, cfg.RedirectURI))
 	mux.HandleFunc("/stock_price", market.MarketHandler)
 
 	fmt.Println("Server running at http://localhost:8000")
