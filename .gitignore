@@ -1,3 +1,4 @@
 .env
 instruments.db
 instrument.json
+node_modules
