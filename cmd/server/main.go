@@ -1,16 +1,30 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
+	"log"
 	"net/http"
 	"stockbroker/internal/auth"
 	"stockbroker/internal/config"
 	"stockbroker/internal/market"
+
+	_ "modernc.org/sqlite"
 )
 
 func main() {
 	// Load env config
 	cfg := config.Load()
+
+	db, err := sql.Open("sqlite", "instruments.db")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db.SetMaxOpenConns(1)
+	db.SetMaxIdleConns(1)
+
+	market.SetInstrumentDB(db)
 
 	// Create OAuth client (VERY IMPORTANT)
 	oauth := &auth.UpstoxOAuth{

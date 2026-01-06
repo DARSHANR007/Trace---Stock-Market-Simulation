@@ -27,9 +27,15 @@ func MarketHandler(w http.ResponseWriter, r *http.Request) {
 
 	//RelianceinstrumentKey := "NSE_EQ|INE002A01018"
 
-	ZomatoInstrumentKey := "NSE_EQ|INE758T01015"
+	// ZomatoInstrumentKey := "NSE_EQ|INE758T01015"
 
-	data, err := searchstock.GetStockPrice(accessToken, ZomatoInstrumentKey)
+	instrumentKey, err := GetInstrumentKeyBySymbol(InstrumentDB, symbol)
+	if err != nil {
+		http.Error(w, "Instrument not found", http.StatusNotFound)
+		return
+	}
+
+	data, err := searchstock.GetStockPrice(accessToken, instrumentKey)
 	if err != nil {
 		fmt.Println(err)
 		http.Error(w, "Error fetching stock data", http.StatusInternalServerError)
