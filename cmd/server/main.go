@@ -40,7 +40,7 @@ func main() {
 	mux.HandleFunc("/login", auth.LoginHandler(cfg.ClientID, cfg.RedirectURI))
 	mux.HandleFunc("/callback", auth.CallbackHandler(oauth))
 	mux.HandleFunc("/getprice", market.MarketHandler)
-	mux.HandleFunc("/seeprice", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/api/seeprice", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "ui/index.html")
 	})
 

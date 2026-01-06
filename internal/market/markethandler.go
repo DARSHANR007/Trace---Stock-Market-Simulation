@@ -31,7 +31,7 @@ func MarketHandler(w http.ResponseWriter, r *http.Request) {
 	// ZomatoInstrumentKey := "NSE_EQ|INE758T01015"
 	start := time.Now()
 	instrumentKey, err := GetInstrumentKeyBySymbol(InstrumentDB, symbol)
-	fmt.Println("Total Time Taken:", time.Since(start))
+	fmt.Println("Total Time Taken :", time.Since(start))
 	if err != nil {
 		http.Error(w, "Instrument not found", http.StatusNotFound)
 		return
