@@ -6,21 +6,77 @@
 	<style>
 		body {
 			font-family: Arial, sans-serif;
+			background: #f2f4f8;
 			padding: 40px;
 		}
+
+		h2 {
+			margin-bottom: 20px;
+		}
+
+		.search-box {
+			margin-bottom: 20px;
+		}
+
 		input {
-			padding: 8px;
+			padding: 10px;
 			font-size: 16px;
+			width: 220px;
 		}
+
 		button {
-			padding: 8px 14px;
+			padding: 10px 16px;
 			font-size: 16px;
-			margin-left: 6px;
+			margin-left: 8px;
+			cursor: pointer;
 		}
+
+		.card {
+			background: #fff;
+			padding: 20px;
+			border-radius: 8px;
+			box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+			max-width: 600px;
+		}
+
+		.row {
+			display: flex;
+			justify-content: space-between;
+			margin-bottom: 8px;
+		}
+
+		.label {
+			color: #666;
+		}
+
+		.value {
+			font-weight: bold;
+		}
+
+		.positive {
+			color: green;
+		}
+
+		.negative {
+			color: red;
+		}
+
 		pre {
 			margin-top: 20px;
-			background: #f5f5f5;
+			background: #111;
+			color: #0f0;
 			padding: 15px;
+			border-radius: 6px;
+			overflow-x: auto;
+			font-size: 13px;
+			display: none;
+		}
+
+		.toggle {
+			margin-top: 10px;
+			cursor: pointer;
+			color: #007bff;
+			font-size: 14px;
 		}
 	</style>
 </head>
@@ -28,10 +84,14 @@
 
 	<h2>Stock Price</h2>
 
-	<input id="symbol" placeholder="ZOMATO / RELIANCE / TCS" />
-	<button onclick="getPrice()">Get Price</button>
+	<div class="search-box">
+		<input id="symbol" placeholder="ITC / TCS / ZOMATO" />
+		<button onclick="getPrice()">Get Price</button>
+	</div>
 
-	<pre id="result"></pre>
+	<div id="output"></div>
+
+	<pre id="raw"></pre>
 
 	<script>
 		function getPrice() {
@@ -42,13 +102,81 @@
 			}
 
 			fetch(`/getprice?symbol=${symbol}`)
-				.then(res => res.text())
-				.then(data => {
-					document.getElementById("result").textContent = data;
-				})
+				.then(res => res.json())
+				.then(json => renderData(json))
 				.catch(() => {
-					document.getElementById("result").textContent = "Error fetching data";
+					document.getElementById("output").innerHTML = "Error fetching data";
 				});
+		}
+
+		function renderData(json) {
+			const dataObj = json.data;
+			const key = Object.keys(dataObj)[0];
+			const d = dataObj[key];
+
+			const changeClass = d.net_change >= 0 ? "positive" : "negative";
+
+			document.getElementById("output").innerHTML = `
+				<div class="card">
+					<div class="row">
+						<div class="label">Symbol</div>
+						<div class="value">${d.symbol}</div>
+					</div>
+
+					<div class="row">
+						<div class="label">Last Price</div>
+						<div class="value">${d.last_price}</div>
+					</div>
+
+					<div class="row">
+						<div class="label">Net Change</div>
+						<div class="value ${changeClass}">
+							${d.net_change}
+						</div>
+					</div>
+
+					<div class="row">
+						<div class="label">Open</div>
+						<div class="value">${d.ohlc.open}</div>
+					</div>
+
+					<div class="row">
+						<div class="label">High</div>
+						<div class="value">${d.ohlc.high}</div>
+					</div>
+
+					<div class="row">
+						<div class="label">Low</div>
+						<div class="value">${d.ohlc.low}</div>
+					</div>
+
+					<div class="row">
+						<div class="label">Close</div>
+						<div class="value">${d.ohlc.close}</div>
+					</div>
+
+					<div class="row">
+						<div class="label">Volume</div>
+						<div class="value">${d.volume.toLocaleString()}</div>
+					</div>
+
+					<div class="row">
+						<div class="label">Timestamp</div>
+						<div class="value">${new Date(d.timestamp).toLocaleString()}</div>
+					</div>
+
+					<div class="toggle" onclick="toggleRaw()">Show raw JSON</div>
+				</div>
+			`;
+
+			document.getElementById("raw").textContent =
+				JSON.stringify(json, null, 2);
+			document.getElementById("raw").style.display = "none";
+		}
+
+		function toggleRaw() {
+			const raw = document.getElementById("raw");
+			raw.style.display = raw.style.display === "none" ? "block" : "none";
 		}
 	</script>
 
