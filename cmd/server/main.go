@@ -40,14 +40,14 @@ func main() {
 	mux.HandleFunc("/login", auth.LoginHandler(cfg.ClientID, cfg.RedirectURI))
 	mux.HandleFunc("/callback", auth.CallbackHandler(oauth))
 	mux.HandleFunc("/getprice", market.MarketHandler)
-	mux.HandleFunc("/api/seeprice", func(w http.ResponseWriter, r *http.Request) {
-		http.ServeFile(w, r, "ui/index.html")
-	})
+	fs := http.FileServer(http.Dir("./ui"))
+	mux.Handle("/seeprice/", http.StripPrefix("/seeprice/", fs))
 
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		w.Write([]byte("Server running"))
 	})
 
 	fmt.Println("Server running at http://localhost:8000/login")
-	http.ListenAndServe(":8000", mux)
+	log.Fatal(http.ListenAndServe(":8000", mux))
+
 }
