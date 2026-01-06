@@ -3,6 +3,7 @@ package market
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"stockbroker/internal/auth"
 	searchstock "stockbroker/internal/search_stock"
@@ -28,8 +29,9 @@ func MarketHandler(w http.ResponseWriter, r *http.Request) {
 	//RelianceinstrumentKey := "NSE_EQ|INE002A01018"
 
 	// ZomatoInstrumentKey := "NSE_EQ|INE758T01015"
-
+	start := time.Now()
 	instrumentKey, err := GetInstrumentKeyBySymbol(InstrumentDB, symbol)
+	fmt.Println("Total Time Taken:", time.Since(start))
 	if err != nil {
 		http.Error(w, "Instrument not found", http.StatusNotFound)
 		return

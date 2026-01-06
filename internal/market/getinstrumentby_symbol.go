@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"time"
 )
 
 func GetInstrumentKeyBySymbol(db *sql.DB, symbol string) (string, error) {
@@ -20,7 +21,9 @@ func GetInstrumentKeyBySymbol(db *sql.DB, symbol string) (string, error) {
 		LIMIT 1;
 	`
 	var instrumentKey string
+	start := time.Now()
 	err := db.QueryRow(query, symbol).Scan(&instrumentKey)
+	fmt.Println("DB Query Time:", time.Since(start))
 	if err == sql.ErrNoRows {
 		return "", errors.New("instrument not found")
 	}
