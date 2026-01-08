@@ -47,6 +47,8 @@ func main() {
 		w.Write([]byte("Server running"))
 	})
 
+	mux.HandleFunc("/ohlc", market.)
+
 	fmt.Println("Server running at http://localhost:8000/login")
 	log.Fatal(http.ListenAndServe(":8000", mux))
 

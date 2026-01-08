@@ -5,6 +5,6 @@ import (
 	"time"
 )
 
-var httpClient = &http.Client{
+var HttpClient = &http.Client{
 	Timeout: 5 * time.Second,
 }

@@ -19,10 +19,3 @@ func FetchOHLCurl(
 		toDate,
 	)
 }
-
-type CandleAPIResponse struct {
-	Status string `json:"status"`
-	Data   struct {
-		Candles [][]interface{} `json:"candles"`
-	} `json:"data"`
-}

@@ -10,3 +10,10 @@ type Candle struct {
 	Close  float64
 	Volume int64
 }
+
+type CandleAPIResponse struct {
+	Status string `json:"status"`
+	Data   struct {
+		Candles [][]interface{} `json:"candles"`
+	} `json:"data"`
+}
