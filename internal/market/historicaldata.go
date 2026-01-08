@@ -12,7 +12,7 @@ import (
 func GetHistoricalData(instrument_key string, unit string, interval string, from string,
 	to string) (models.CandleAPIResponse, error) {
 
-	url := providers.FetchOHLCurl(instrument_key, unit, interval, from, to)
+	url := providers.FetchOHLCurl(instrument_key, unit, interval, to, from)
 
 	req, err := http.NewRequest("GET", url, nil)
 
