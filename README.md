@@ -1,5 +1,6 @@
 
-<h1>TRACE - Simulate Stocks</h1>
+<h1>TRACE - Capital Markets
+</h1>
 
 This project is built to understand how stock markets and trading platforms work using real market data. It fetches live prices from Upstox and displays them on a web interface, with the backend written in Go
 
