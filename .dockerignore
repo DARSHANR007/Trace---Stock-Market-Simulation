@@ -1,0 +1,6 @@
+instrument.json
+instruments.db-shm
+instruments.db-wal
+.env
+.git
+frontend/

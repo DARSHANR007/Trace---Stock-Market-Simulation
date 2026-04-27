@@ -90,7 +90,6 @@ func OhlcHandler(w http.ResponseWriter, r *http.Request) {
 	toStr := parts[4]
 	fromStr := parts[5]
 
-	// Decode instrument key (for NSE_EQ|...)
 	instrumentKey, err := url.PathUnescape(instrumentKey)
 	if err != nil {
 		http.Error(w, "Invalid instrument_key", http.StatusBadRequest)
