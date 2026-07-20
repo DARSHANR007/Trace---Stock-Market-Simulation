@@ -9,7 +9,7 @@ import {
   Moon,
   ChevronRight
 } from 'lucide-react';
-import { APIResponse, StockData } from './types';
+import { APIResponse, SearchSuggestion, StockData } from './types';
 import OrderBook from './components/OrderBook';
 import MarketStats from './components/MarketStats';
 import OHLCDisplay from './components/OHLCDisplay';
@@ -17,6 +17,8 @@ import OHLCDisplay from './components/OHLCDisplay';
 const App: React.FC = () => {
   const [symbol, setSymbol] = useState('HYUNDAI');
   const [data, setData] = useState<StockData | null>(null);
+  const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
+  const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLight, setIsLight] = useState(false);
@@ -27,7 +29,7 @@ const App: React.FC = () => {
     setError(null);
     try {
       // Connect to the actual go backend endpoint
-      const res = await fetch(`/getprice?symbol=${searchSymbol.toUpperCase()}`);
+      const res = await fetch(`/getprice?symbol=${encodeURIComponent(searchSymbol.trim())}`);
       if (!res.ok) throw new Error('Network response was not ok');
       const json: APIResponse = await res.json();
       
@@ -50,6 +52,38 @@ const App: React.FC = () => {
   }, [fetchStockPrice]);
 
   useEffect(() => {
+    const query = symbol.trim();
+
+    if (!query) {
+      setSuggestions([]);
+      setActiveSuggestionIndex(-1);
+      return;
+    }
+
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/suggestions?q=${encodeURIComponent(query)}`);
+        if (!res.ok) return;
+
+        const json = await res.json();
+        if (json.status === 'success' && Array.isArray(json.data)) {
+          setSuggestions(json.data as SearchSuggestion[]);
+          setActiveSuggestionIndex(json.data.length > 0 ? 0 : -1);
+        } else {
+          setSuggestions([]);
+          setActiveSuggestionIndex(-1);
+        }
+      } catch (err) {
+        console.error(err);
+        setSuggestions([]);
+        setActiveSuggestionIndex(-1);
+      }
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [symbol]);
+
+  useEffect(() => {
     if (isLight) {
       document.body.classList.add('light');
     } else {
@@ -59,7 +93,49 @@ const App: React.FC = () => {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    if (suggestions.length > 0 && activeSuggestionIndex >= 0) {
+      handleSuggestionClick(suggestions[activeSuggestionIndex]);
+      return;
+    }
+
     if (symbol.trim()) fetchStockPrice(symbol);
+  };
+
+  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+    setSymbol(suggestion.symbol);
+    setSuggestions([]);
+    setActiveSuggestionIndex(-1);
+    fetchStockPrice(suggestion.symbol);
+  };
+
+  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (suggestions.length === 0) {
+      return;
+    }
+
+    if (event.key === 'ArrowDown') {
+      event.preventDefault();
+      setActiveSuggestionIndex((current) => (current + 1) % suggestions.length);
+      return;
+    }
+
+    if (event.key === 'ArrowUp') {
+      event.preventDefault();
+      setActiveSuggestionIndex((current) => (current <= 0 ? suggestions.length - 1 : current - 1));
+      return;
+    }
+
+    if (event.key === 'Enter' && activeSuggestionIndex >= 0) {
+      event.preventDefault();
+      handleSuggestionClick(suggestions[activeSuggestionIndex]);
+      return;
+    }
+
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      setSuggestions([]);
+      setActiveSuggestionIndex(-1);
+    }
   };
 
   const isPositive = data ? data.net_change >= 0 : false;
@@ -94,12 +170,50 @@ const App: React.FC = () => {
               type="text"
               value={symbol}
               onChange={(e: { target: { value: any; }; }) => setSymbol(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               className="w-full bg-transparent border-b border-current/10 focus:border-current py-3 text-xs font-mono uppercase tracking-widest focus:outline-none transition-all text-center placeholder:opacity-30"
-              placeholder="ENTER SYMBOL"
+              placeholder="ENTER SYMBOL OR NAME"
+              autoComplete="off"
+              spellCheck={false}
             />
+            <div className="mt-2 text-[10px] font-mono uppercase tracking-[0.2em] opacity-30 text-center">
+              Partial and case-insensitive search supported
+            </div>
             <button type="submit" className="absolute right-0 top-1/2 -translate-y-1/2 opacity-40 group-focus-within:opacity-100 transition-opacity p-2">
               <Search className="w-4 h-4" />
             </button>
+
+            {suggestions.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-4 z-20 overflow-hidden rounded-2xl border border-current/10 bg-[#0d0f14]/95 shadow-2xl backdrop-blur-md">
+                {suggestions.map((suggestion, index) => {
+                  const isActive = index === activeSuggestionIndex;
+
+                  return (
+                    <div
+                      key={suggestion.instrument_key}
+                      role="option"
+                      aria-selected={isActive}
+                      tabIndex={-1}
+                      onMouseEnter={() => setActiveSuggestionIndex(index)}
+                      onMouseDown={(event) => {
+                        event.preventDefault();
+                        handleSuggestionClick(suggestion);
+                      }}
+                      className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left transition-colors ${isActive ? 'bg-current/10' : 'hover:bg-current/5'}`}
+                    >
+                      <div className="min-w-0">
+                        <div className="text-sm font-mono tracking-widest uppercase">{suggestion.symbol}</div>
+                        <div className="truncate text-[10px] opacity-50">{suggestion.name}</div>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2 text-[10px] font-mono uppercase tracking-[0.2em] opacity-40">
+                        <span>{suggestion.segment}</span>
+                        <ChevronRight size={14} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </form>
         </div>
 

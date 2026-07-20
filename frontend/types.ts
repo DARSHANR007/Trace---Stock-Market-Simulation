@@ -43,3 +43,10 @@ export interface APIResponse {
     [key: string]: StockData;
   };
 }
+
+export interface SearchSuggestion {
+  symbol: string;
+  name: string;
+  instrument_key: string;
+  segment: string;
+}

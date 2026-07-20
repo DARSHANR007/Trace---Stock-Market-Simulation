@@ -1,7 +1,6 @@
 package market
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"net/url"
@@ -80,7 +79,7 @@ func OhlcHandler(w http.ResponseWriter, r *http.Request) {
 
 	// ["ohlc", instrument, unit, interval, to_date, from_date]
 	if len(parts) != 6 {
-		http.Error(w, "Invalid URL format", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Invalid URL format")
 		return
 	}
 
@@ -92,40 +91,40 @@ func OhlcHandler(w http.ResponseWriter, r *http.Request) {
 
 	instrumentKey, err := url.PathUnescape(instrumentKey)
 	if err != nil {
-		http.Error(w, "Invalid instrument_key", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Invalid instrument_key")
 		return
 	}
 
 	// Convert interval to int
 	interval, err := strconv.Atoi(intervalStr)
 	if err != nil {
-		http.Error(w, "Invalid interval", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Invalid interval")
 		return
 	}
 
 	// Parse dates
 	fromDate, err := time.Parse("2006-01-02", fromStr)
 	if err != nil {
-		http.Error(w, "Invalid from_date", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Invalid from_date")
 		return
 	}
 
 	toDate, err := time.Parse("2006-01-02", toStr)
 	if err != nil {
-		http.Error(w, "Invalid to_date", http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, "Invalid to_date")
 		return
 	}
 
 	// Validate OHLC rules BEFORE calling Upstox
 	if err := validateOHLC(unit, interval, fromDate, toDate); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+		writeJSONError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	// Resolve instrument key from DB
 	instrument, err := GetInstrumentKeyBySymbol(InstrumentDB, instrumentKey)
 	if err != nil {
-		http.Error(w, "Instrument not found", http.StatusNotFound)
+		writeJSONError(w, http.StatusNotFound, "Instrument not found")
 		return
 	}
 
@@ -138,10 +137,9 @@ func OhlcHandler(w http.ResponseWriter, r *http.Request) {
 		toStr,
 	)
 	if err != nil {
-		http.Error(w, "Error fetching historical data", http.StatusInternalServerError)
+		writeJSONError(w, http.StatusInternalServerError, "Error fetching historical data")
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(result)
+	writeJSONResponse(w, http.StatusOK, result)
 }

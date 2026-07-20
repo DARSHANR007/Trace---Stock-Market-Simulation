@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: stockbroker
+  namespace: stockbroker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: stockbroker
+  template:
+    metadata:
+      labels:
+        app: stockbroker
+    spec:
+      containers:
+        - name: stockbroker
+          image: stockbroker:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 8000
+          envFrom:
+            - secretRef:
+                name: stockbroker-env
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

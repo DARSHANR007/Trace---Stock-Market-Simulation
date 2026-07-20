@@ -12,6 +12,7 @@ type Config struct {
 	ClientSecret string
 	RedirectURI  string
 	DevToken     string
+	RedisURL     string
 }
 
 func Load() *Config {
@@ -21,6 +22,7 @@ func Load() *Config {
 		ClientID:     os.Getenv("UPSTOX_API_KEY"),
 		ClientSecret: os.Getenv("UPSTOX_API_SECRET"),
 		RedirectURI:  os.Getenv("UPSTOX_REDIRECT_URI"),
+		RedisURL:     os.Getenv("REDIS_URL"),
 	}
 
 	if cfg.ClientID == "" || cfg.ClientSecret == "" || cfg.RedirectURI == "" {
