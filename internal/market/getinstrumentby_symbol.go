@@ -10,11 +10,6 @@ import (
 
 func GetInstrumentKeyBySymbol(db *sql.DB, symbol string) (string, error) {
 	symbol = strings.ToUpper(strings.TrimSpace(symbol))
-	cacheKey := "search:instrument:" + symbol
-	var cached string
-	if cacheGet(cacheKey, &cached) {
-		return cached, nil
-	}
 	pattern := "%" + symbol + "%"
 	prefixPattern := symbol + "%"
 
@@ -97,7 +92,6 @@ func GetInstrumentKeyBySymbol(db *sql.DB, symbol string) (string, error) {
 	}
 
 	fmt.Println(instrumentKey)
-	cacheSet(cacheKey, instrumentKey, 10*time.Minute)
 
 	return instrumentKey, nil
 }

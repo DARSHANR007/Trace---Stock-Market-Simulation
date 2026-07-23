@@ -10,6 +10,19 @@ Over time, this will grow into a paper trading setup where stocks can be traded 
 
 Everything in this project is simulated. No real money is involved, and no real trades are made. The goal is simply to learn about markets and trading systems by building and experimenting with them.
 
+## One-Command Run
+
+The API and Redis now run together with Docker Compose.
+
+1. Create a local `.env` from `.env.example` and fill in your Upstox values.
+2. Start everything from the project root with:
+
+```powershell
+docker compose up --build
+```
+
+The API will be available at `http://localhost:8000` and Redis will run inside the same Compose network.
+
 
 <img width="1778" height="860" alt="image" src="https://github.com/user-attachments/assets/d036f98b-5b1e-40b3-94dc-72b6fde85fa5" />
 

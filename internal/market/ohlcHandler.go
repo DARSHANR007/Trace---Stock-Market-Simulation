@@ -52,7 +52,7 @@ func validateOHLC(unit string, interval int, from, to time.Time) error {
 			return errors.New("days data available only from Jan 2000")
 		}
 
-		// ✅ correct: 1 decade leading up to to_date
+		//  correct: 1 decade leading up to to_date
 		if from.Before(to.AddDate(-10, 0, 0)) {
 			return errors.New("days supports only 1 decade leading up to to_date")
 		}
