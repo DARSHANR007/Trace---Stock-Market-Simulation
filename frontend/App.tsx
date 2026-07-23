@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
   ArrowUp, 
   ArrowDown, 
@@ -19,9 +19,12 @@ const App: React.FC = () => {
   const [data, setData] = useState<StockData | null>(null);
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([]);
   const [activeSuggestionIndex, setActiveSuggestionIndex] = useState(-1);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLight, setIsLight] = useState(false);
+
+  const searchContainerRef = useRef<HTMLDivElement>(null);
 
   const fetchStockPrice = useCallback(async (searchSymbol: string) => {
     if (!searchSymbol) return;
@@ -30,18 +33,17 @@ const App: React.FC = () => {
     try {
       // Connect to the actual go backend endpoint
       const res = await fetch(`/getprice?symbol=${encodeURIComponent(searchSymbol.trim())}`);
-      if (!res.ok) throw new Error('Network response was not ok');
-      const json: APIResponse = await res.json();
+      const json: APIResponse & { message?: string } = await res.json();
       
-      if (json.status === 'success' && json.data) {
+      if (res.ok && json.status === 'success' && json.data) {
         const key = Object.keys(json.data)[0];
         setData(json.data[key]);
       } else {
-        throw new Error('Invalid symbol or no data received');
+        throw new Error(json.message || 'Invalid symbol or no data received');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError('Signal failed. Verify backend connectivity.');
+      setError(err?.message || 'Failed to connect to backend.');
     } finally {
       setLoading(false);
     }
@@ -52,11 +54,23 @@ const App: React.FC = () => {
   }, [fetchStockPrice]);
 
   useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  useEffect(() => {
     const query = symbol.trim();
 
-    if (!query) {
-      setSuggestions([]);
-      setActiveSuggestionIndex(-1);
+    if (!query || !showSuggestions) {
+      if (!query) {
+        setSuggestions([]);
+        setActiveSuggestionIndex(-1);
+      }
       return;
     }
 
@@ -68,7 +82,7 @@ const App: React.FC = () => {
         const json = await res.json();
         if (json.status === 'success' && Array.isArray(json.data)) {
           setSuggestions(json.data as SearchSuggestion[]);
-          setActiveSuggestionIndex(json.data.length > 0 ? 0 : -1);
+          setActiveSuggestionIndex(-1);
         } else {
           setSuggestions([]);
           setActiveSuggestionIndex(-1);
@@ -81,7 +95,7 @@ const App: React.FC = () => {
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [symbol]);
+  }, [symbol, showSuggestions]);
 
   useEffect(() => {
     if (isLight) {
@@ -91,25 +105,35 @@ const App: React.FC = () => {
     }
   }, [isLight]);
 
+  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
+    setSymbol(suggestion.symbol);
+    setShowSuggestions(false);
+    setSuggestions([]);
+    setActiveSuggestionIndex(-1);
+    fetchStockPrice(suggestion.instrument_key || suggestion.symbol);
+  };
+
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    if (suggestions.length > 0 && activeSuggestionIndex >= 0) {
+    setShowSuggestions(false);
+
+    if (showSuggestions && suggestions.length > 0 && activeSuggestionIndex >= 0) {
       handleSuggestionClick(suggestions[activeSuggestionIndex]);
       return;
     }
 
-    if (symbol.trim()) fetchStockPrice(symbol);
-  };
-
-  const handleSuggestionClick = (suggestion: SearchSuggestion) => {
-    setSymbol(suggestion.symbol);
-    setSuggestions([]);
-    setActiveSuggestionIndex(-1);
-    fetchStockPrice(suggestion.symbol);
+    if (symbol.trim()) {
+      setSuggestions([]);
+      setActiveSuggestionIndex(-1);
+      fetchStockPrice(symbol.trim());
+    }
   };
 
   const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (suggestions.length === 0) {
+    if (!showSuggestions || suggestions.length === 0) {
+      if (event.key === 'ArrowDown' && suggestions.length > 0) {
+        setShowSuggestions(true);
+      }
       return;
     }
 
@@ -133,7 +157,7 @@ const App: React.FC = () => {
 
     if (event.key === 'Escape') {
       event.preventDefault();
-      setSuggestions([]);
+      setShowSuggestions(false);
       setActiveSuggestionIndex(-1);
     }
   };
@@ -165,25 +189,33 @@ const App: React.FC = () => {
 
         {/* Centered Search Area above stock price */}
         <div className="flex justify-center mb-16">
-          <form onSubmit={handleSearch} className="relative group w-full max-w-sm">
-            <input
-              type="text"
-              value={symbol}
-              onChange={(e: { target: { value: any; }; }) => setSymbol(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              className="w-full bg-transparent border-b border-current/10 focus:border-current py-3 text-xs font-mono uppercase tracking-widest focus:outline-none transition-all text-center placeholder:opacity-30"
-              placeholder="ENTER SYMBOL OR NAME"
-              autoComplete="off"
-              spellCheck={false}
-            />
-            <div className="mt-2 text-[10px] font-mono uppercase tracking-[0.2em] opacity-30 text-center">
-              Partial and case-insensitive search supported
-            </div>
-            <button type="submit" className="absolute right-0 top-1/2 -translate-y-1/2 opacity-40 group-focus-within:opacity-100 transition-opacity p-2">
-              <Search className="w-4 h-4" />
-            </button>
+          <div ref={searchContainerRef} className="relative w-full max-w-sm">
+            <form onSubmit={handleSearch} className="relative group w-full">
+              <input
+                type="text"
+                value={symbol}
+                onChange={(e) => {
+                  setSymbol(e.target.value);
+                  setShowSuggestions(true);
+                }}
+                onFocus={() => {
+                  if (suggestions.length > 0) setShowSuggestions(true);
+                }}
+                onKeyDown={handleSearchKeyDown}
+                className="w-full bg-transparent border-b border-current/10 focus:border-current py-3 text-xs font-mono uppercase tracking-widest focus:outline-none transition-all text-center placeholder:opacity-30"
+                placeholder="ENTER SYMBOL OR NAME"
+                autoComplete="off"
+                spellCheck={false}
+              />
+              <div className="mt-2 text-[10px] font-mono uppercase tracking-[0.2em] opacity-30 text-center">
+                Partial and case-insensitive search supported
+              </div>
+              <button type="submit" className="absolute right-0 top-1/2 -translate-y-1/2 opacity-40 group-focus-within:opacity-100 transition-opacity p-2">
+                <Search className="w-4 h-4" />
+              </button>
+            </form>
 
-            {suggestions.length > 0 && (
+            {showSuggestions && suggestions.length > 0 && (
               <div className="absolute left-0 right-0 top-full mt-4 z-20 overflow-hidden rounded-2xl border border-current/10 bg-[#0d0f14]/95 shadow-2xl backdrop-blur-md">
                 {suggestions.map((suggestion, index) => {
                   const isActive = index === activeSuggestionIndex;
@@ -199,7 +231,7 @@ const App: React.FC = () => {
                         event.preventDefault();
                         handleSuggestionClick(suggestion);
                       }}
-                      className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left transition-colors ${isActive ? 'bg-current/10' : 'hover:bg-current/5'}`}
+                      className={`flex w-full items-start justify-between gap-4 px-4 py-3 text-left transition-colors cursor-pointer ${isActive ? 'bg-current/10' : 'hover:bg-current/5'}`}
                     >
                       <div className="min-w-0">
                         <div className="text-sm font-mono tracking-widest uppercase">{suggestion.symbol}</div>
@@ -214,7 +246,7 @@ const App: React.FC = () => {
                 })}
               </div>
             )}
-          </form>
+          </div>
         </div>
 
         {error && (

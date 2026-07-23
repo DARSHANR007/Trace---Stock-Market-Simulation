@@ -16,6 +16,13 @@ func GetInstrumentKeyBySymbol(db *sql.DB, symbol string) (string, error) {
 	query := `
 		SELECT instrument_key
 		FROM (
+			SELECT instrument_key, 0 AS match_rank
+			FROM instruments
+			WHERE UPPER(TRIM(instrument_key)) = ?
+			  AND segment IN ('NSE_EQ', 'BSE_EQ')
+
+			UNION ALL
+
 			SELECT instrument_key, 1 AS match_rank
 			FROM instruments
 			WHERE UPPER(TRIM(trading_symbol)) = ?
@@ -82,7 +89,7 @@ func GetInstrumentKeyBySymbol(db *sql.DB, symbol string) (string, error) {
 	`
 	var instrumentKey string
 	start := time.Now()
-	err := db.QueryRow(query, symbol, symbol, symbol, prefixPattern, prefixPattern, prefixPattern, pattern, pattern, pattern).Scan(&instrumentKey)
+	err := db.QueryRow(query, symbol, symbol, symbol, symbol, prefixPattern, prefixPattern, prefixPattern, pattern, pattern, pattern).Scan(&instrumentKey)
 	fmt.Println("DB Query Time:", time.Since(start))
 	if err == sql.ErrNoRows {
 		return "", errors.New("instrument not found")

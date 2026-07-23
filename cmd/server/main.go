@@ -65,6 +65,14 @@ func main() {
 
 	mux.HandleFunc("/ohlc/", market.OhlcHandler)
 
+	// Serve frontend static UI files at /seeprice/
+	uiDir := "./ui"
+	fs := http.FileServer(http.Dir(uiDir))
+	mux.Handle("/seeprice/", http.StripPrefix("/seeprice/", fs))
+	mux.HandleFunc("/seeprice", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/seeprice/", http.StatusFound)
+	})
+
 	fmt.Println("Server running at http://localhost:8000/login")
 	log.Fatal(http.ListenAndServe(":8000", mux))
 
